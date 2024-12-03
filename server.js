@@ -1,8 +1,6 @@
 const express = require("express");
 const fetch = require("node-fetch");
-const ethers = require("ether");
-const dotenv = require("dotenv");
-dotenv.config();
+
 
 const app = express();
 const PORT = 3000;
@@ -118,53 +116,6 @@ app.get("/match-results", async (req, res) => {
     }
 });
 
-// Start the server
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-});
-
-
-// Load environment variables
-const INFURA_SEPOLIA_URL = process.env.INFURA_SEPOLIA_URL;
-const PRIVATE_KEY = process.env.PRIVATE_KEY;
-
-// Initialize Ethereum provider
-const provider = new ethers.JsonRpcProvider(INFURA_SEPOLIA_URL);
-
-// Initialize Wallet
-const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
-
-// Log for confirmation
-console.log("Ethereum provider and wallet initialized!");
-
-
-
-
-async function sendToBlockchain(data) {
-    try {
-        // Simulate preparing data for a transaction
-        console.log("Preparing data for blockchain:", data);
-
-        // For now, just log the data without sending
-        console.log("Simulating transaction to smart contract...");
-        console.log("Transaction details:", {
-            from: wallet.address,
-            data,
-        });
-
-        // Simulate a transaction hash
-        const mockTransactionHash = "0x1234...mockhash";
-        console.log("Transaction simulated with hash:", mockTransactionHash);
-
-        // Return a mock response
-        return { success: true, transactionHash: mockTransactionHash };
-    } catch (error) {
-        console.error("Error preparing data for blockchain:", error);
-        throw new Error("Failed to prepare transaction");
-    }
-}
-
-
 app.post("/send-to-blockchain", async (req, res) => {
     try {
         // Extract the data from the request
@@ -187,6 +138,14 @@ app.post("/send-to-blockchain", async (req, res) => {
         res.status(500).json({ error: "Failed to process data." });
     }
 });
+
+// Start the server
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
+
+
+
 
 
 
