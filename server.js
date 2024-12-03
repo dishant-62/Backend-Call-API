@@ -1,9 +1,16 @@
 const express = require("express");
 const fetch = require("node-fetch");
-
+const dotenv = require("dotenv");
+// const ether = require("ethers");
 
 const app = express();
 const PORT = 3000;
+// const provider = new ether.JsonRpcProvider(process.env.RPC_URL); // E.g., Infura or Alchemy RPC URL
+// const wallet = new ether.Wallet(process.env.PRIVATE_KEY, provider);
+// const contractAddress = process.env.CONTRACT_ADDRESS;
+dotenv.config(); //--
+//Middleware is imp
+app.use(express.json());
 
 const API_URL = "https://api.cricapi.com/v1/match_info?apikey=1a119783-131c-4e35-bfe2-00ba7f2d4f0e&id=43668401-454e-4844-995e-d591d1398cc7";
 
@@ -18,6 +25,36 @@ async function fetchData() {
         throw error;
     }
 }
+const abi = [
+    {
+      "inputs": [
+        { "internalType": "string", "name": "_name", "type": "string" },
+        { "internalType": "string", "name": "_status", "type": "string" },
+        { "internalType": "string", "name": "_venue", "type": "string" },
+        { "internalType": "uint256", "name": "_scoreIndia", "type": "uint256" },
+        { "internalType": "uint256", "name": "_scoreSouthAfrica", "type": "uint256" }
+      ],
+      "name": "storeMatchData",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getMatchData",
+      "outputs": [
+        { "internalType": "string", "name": "", "type": "string" },
+        { "internalType": "string", "name": "", "type": "string" },
+        { "internalType": "string", "name": "", "type": "string" },
+        { "internalType": "uint256", "name": "", "type": "uint256" },
+        { "internalType": "uint256", "name": "", "type": "uint256" }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ];
+
+// const contract = new ether.Contract(contractAddress, abi, wallet);
 
 // Function to get match information
 async function getMatchInfo() {
@@ -70,6 +107,28 @@ async function getMatchResults() {
     };
 }
 
+async function sendToBlockchain(name, status, venue, scoreIndia, scoreSouthAfrica) {
+    try {
+        console.log("Sending match data to the contract...");
+
+        // Call the contract function to store match data
+        const tx = await contract.storeMatchData(name, status, venue, scoreIndia, scoreSouthAfrica);
+
+        // Wait for the transaction to be mined
+        await tx.wait();
+        console.log("Transaction successful:", tx.hash);
+
+        return tx.hash;
+    } catch (error) {
+        console.error("Error sending data to the blockchain:", error);
+        throw error;
+    }
+}
+
+
+
+
+
 // Define API endpoints
 app.get("/match-info", async (req, res) => {
     try {
@@ -116,28 +175,46 @@ app.get("/match-results", async (req, res) => {
     }
 });
 
-app.post("/send-to-blockchain", async (req, res) => {
+app.post("/sendMatchData", async (req, res) => {
+    const { name, status, venue, scoreIndia, scoreSouthAfrica } = req.body;
+
     try {
-        // Extract the data from the request
-        const data = req.body;
-
-        // Validate the input
-        if (!data || Object.keys(data).length === 0) {
-            return res.status(400).json({ error: "Invalid or missing data." });
-        }
-
-        // Call the function to send data
-        const result = await sendToBlockchain(data);
-
-        // Respond with the result
+        // Send data to blockchain
+        const transactionHash = await sendToBlockchain(name, status, venue, scoreIndia, scoreSouthAfrica);
+        
+        // Respond with the transaction hash
         res.status(200).json({
-            message: "Data successfully processed!",
-            transactionHash: result.transactionHash,
+            message: "Match data successfully stored on the blockchain!",
+            transactionHash
         });
     } catch (error) {
-        res.status(500).json({ error: "Failed to process data." });
+        res.status(500).json({ error: "Failed to send match data to the blockchain." });
     }
 });
+
+
+// app.post("/send-to-blockchain", async (req, res) => {
+//     try {
+//         // Extract the data from the request
+//         const data = req.body;
+
+//         // Validate the input
+//         if (!data || Object.keys(data).length === 0) {
+//             return res.status(400).json({ error: "Invalid or missing data." });
+//         }
+
+//         // Call the function to send data
+//         const result = await sendToBlockchain(data);
+
+//         // Respond with the result
+//         res.status(200).json({
+//             message: "Data successfully processed!",
+//             transactionHash: result.transactionHash,
+//         });
+//     } catch (error) {
+//         res.status(500).json({ error: "Failed to process data." });
+//     }
+// });
 
 // Start the server
 app.listen(PORT, () => {

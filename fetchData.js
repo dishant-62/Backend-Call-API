@@ -83,5 +83,4 @@ async function main() {
     console.log(await getMatchResults());
 }
 
-// Run the main function
-main();
+// Run the main function;
